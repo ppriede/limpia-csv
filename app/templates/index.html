@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<form action="/upload" method="post" enctype="multipart/form-data" class="mb-3">
+    <div class="mb-3">
+        <label for="file" class="form-label">Subir CSV</label>
+        <input class="form-control" type="file" id="file" name="file" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Cargar</button>
+</form>
+{% endblock %}
