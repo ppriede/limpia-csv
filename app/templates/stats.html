@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Estadísticas para {{ filename }}{% if label %} (Etiqueta: {{ label }}){% endif %}</h2>
+<form class="row g-3" method="get" action="/stats/{{ filename }}">
+    <div class="col-auto">
+        <input type="text" class="form-control" name="label" placeholder="Etiqueta opcional">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Calcular</button>
+    </div>
+</form>
+{% if stats %}
+<table class="table table-bordered mt-3">
+    <tr><th>Media</th><td>{{ stats.media }}</td></tr>
+    <tr><th>Mediana</th><td>{{ stats.mediana }}</td></tr>
+    <tr><th>Promedio Energético Ruido</th><td>{{ stats.promedio_energetico_ruido }}</td></tr>
+    <tr><th>Percentil 90</th><td>{{ stats.p90 }}</td></tr>
+    <tr><th>Percentil 10</th><td>{{ stats.p10 }}</td></tr>
+</table>
+{% else %}
+<p>No hay datos para calcular.</p>
+{% endif %}
+<a class="btn btn-secondary" href="/data/{{ filename }}">Volver</a>
+{% endblock %}
