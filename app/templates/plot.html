@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Explorar datos: {{ filename }}</h2>
+<div class="mb-3">
+    <label for="column-select" class="form-label">Columna</label>
+    <select id="column-select" class="form-select">
+        {% for col in columns %}
+        <option value="{{ col }}">{{ col }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div id="graph" style="height:400px;"></div>
+<h3 class="mt-3">Descriptores de la selección</h3>
+<table class="table" id="stats-table">
+    <tr><th>Media</th><td id="stat-media"></td></tr>
+    <tr><th>Mediana</th><td id="stat-mediana"></td></tr>
+    <tr><th>Promedio Energético Ruido</th><td id="stat-rms"></td></tr>
+    <tr><th>Percentil 90</th><td id="stat-p90"></td></tr>
+    <tr><th>Percentil 10</th><td id="stat-p10"></td></tr>
+</table>
+<a class="btn btn-secondary" href="/data/{{ filename }}">Volver</a>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+function loadData(){
+    const column = document.getElementById('column-select').value;
+    fetch(`/data_json/{{ filename }}?column=${column}`)
+        .then(r=>r.json())
+        .then(data=>{
+            const trace = {x: data.x, y: data.y, mode: 'lines+markers', name: column};
+            Plotly.newPlot('graph', [trace], {dragmode:'select'}).then(gd => {
+                gd.on('plotly_selected', function(evt){
+                    if(!evt) return;
+                    const indices = evt.points.map(pt => pt.pointIndex);
+                    sendSelection(indices);
+                });
+            });
+        });
+}
+function clearStats(){
+    ['media','mediana','rms','p90','p10'].forEach(id=>{
+        document.getElementById('stat-'+id).textContent='';
+    });
+}
+document.getElementById('column-select').addEventListener('change', () => {
+    clearStats();
+    loadData();
+});
+function sendSelection(indices){
+    const column = document.getElementById('column-select').value;
+    fetch(`/compute_stats/{{ filename }}`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({column:column, indices:indices})
+    }).then(r=>r.json()).then(stats=>{
+        document.getElementById('stat-media').textContent = stats.media?.toFixed(2);
+        document.getElementById('stat-mediana').textContent = stats.mediana?.toFixed(2);
+        document.getElementById('stat-rms').textContent = stats.promedio_energetico_ruido?.toFixed(2);
+        document.getElementById('stat-p90').textContent = stats.p90?.toFixed(2);
+        document.getElementById('stat-p10').textContent = stats.p10?.toFixed(2);
+    });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+});
+</script>
+{% endblock %}

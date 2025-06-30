@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
 import pandas as pd
 import numpy as np
 
@@ -67,6 +67,47 @@ def stats(filename):
             'p10': np.percentile(values, 10)
         }
     return render_template('stats.html', filename=filename, stats=res, label=lbl)
+
+
+@app.route('/plot/<filename>')
+def plot(filename):
+    df = DATA.get(filename)
+    if df is None:
+        return redirect(url_for('index'))
+    cols = df.columns[1:]
+    return render_template('plot.html', filename=filename, columns=cols)
+
+
+@app.route('/data_json/<filename>')
+def data_json(filename):
+    df = DATA.get(filename)
+    if df is None:
+        return jsonify({})
+    col = request.args.get('column', df.columns[1])
+    return jsonify({
+        'x': df.iloc[:, 0].astype(str).tolist(),
+        'y': df[col].astype(float).tolist()
+    })
+
+
+@app.route('/compute_stats/<filename>', methods=['POST'])
+def compute_stats(filename):
+    df = DATA.get(filename)
+    if df is None:
+        return jsonify({})
+    data = request.get_json() or {}
+    col = data.get('column', df.columns[1])
+    indices = [int(i) for i in data.get('indices', [])]
+    subset = df.iloc[indices] if indices else df
+    values = subset[col].astype(float)
+    res = {
+        'media': values.mean(),
+        'mediana': values.median(),
+        'promedio_energetico_ruido': float(np.sqrt(np.mean(values ** 2))),
+        'p90': float(np.percentile(values, 90)),
+        'p10': float(np.percentile(values, 10))
+    }
+    return jsonify(res)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
