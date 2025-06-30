@@ -18,7 +18,8 @@
     </form>
 </div>
 <div class="mb-3">
-    <a class="btn btn-primary" href="/stats/{{ filename }}">Ver estadísticas</a>
+    <a class="btn btn-primary me-2" href="/stats/{{ filename }}">Ver estadísticas</a>
+    <a class="btn btn-secondary" href="/plot/{{ filename }}">Gráfico interactivo</a>
 </div>
 <div class="table-responsive">
 {{ tables|safe }}
